@@ -59,8 +59,10 @@ bool q_insert_head(struct list_head *head, char *s)
     /* initialize the new element */
     int len = strlen(s);
     el->value = malloc(sizeof(char) * (len + 1));
-    if (!el->value)
+    if (!el->value) {
+        free(el);
         return false;
+    }
     strncpy(el->value, s, len + 1);
     INIT_LIST_HEAD(&el->list);
 
@@ -84,8 +86,10 @@ bool q_insert_tail(struct list_head *head, char *s)
     /* initialize the new element */
     int len = strlen(s);
     el->value = malloc(sizeof(char) * (len + 1));
-    if (!el->value)
+    if (!el->value) {
+        free(el);
         return false;
+    }
     strncpy(el->value, s, len + 1);
     INIT_LIST_HEAD(&el->list);
 
@@ -240,16 +244,46 @@ void q_sort(struct list_head *head, bool descend) {}
  * the right side of it */
 int q_ascend(struct list_head *head)
 {
-    // https://leetcode.com/problems/remove-nodes-from-linked-list/
-    return 0;
+    if (!head || list_empty(head) || list_is_singular(head))
+        return q_size(head);
+    element_t *el = list_entry(head->prev, element_t, list);
+    element_t *el_safe = list_entry(el->list.prev, element_t, list);
+    const char *s = el->value;
+    int len = 0;
+    for (; &el->list != head;
+         el = el_safe,
+         el_safe = list_entry(el_safe->list.prev, element_t, list)) {
+        if (strcmp(el->value, s) > 0) {
+            list_del(&el->list);
+            free(el->value);
+            free(el);
+        } else
+            s = el->value, ++len;
+    }
+    return len;
 }
 
 /* Remove every node which has a node with a strictly greater value anywhere to
  * the right side of it */
 int q_descend(struct list_head *head)
 {
-    // https://leetcode.com/problems/remove-nodes-from-linked-list/
-    return 0;
+    if (!head || list_empty(head) || list_is_singular(head))
+        return q_size(head);
+    element_t *el = list_entry(head->prev, element_t, list);
+    element_t *el_safe = list_entry(el->list.prev, element_t, list);
+    const char *s = el->value;
+    int len = 0;
+    for (; &el->list != head;
+         el = el_safe,
+         el_safe = list_entry(el_safe->list.prev, element_t, list)) {
+        if (strcmp(el->value, s) < 0) {
+            list_del(&el->list);
+            free(el->value);
+            free(el);
+        } else
+            s = el->value, ++len;
+    }
+    return len;
 }
 
 /* Merge all the queues into one sorted queue, which is in ascending/descending
