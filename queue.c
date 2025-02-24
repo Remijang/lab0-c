@@ -64,7 +64,6 @@ bool q_insert_head(struct list_head *head, char *s)
         return false;
     }
     strncpy(el->value, s, len + 1);
-    INIT_LIST_HEAD(&el->list);
 
     /* insert the new element at the head of the queue */
     list_add(&el->list, head);
@@ -91,7 +90,6 @@ bool q_insert_tail(struct list_head *head, char *s)
         return false;
     }
     strncpy(el->value, s, len + 1);
-    INIT_LIST_HEAD(&el->list);
 
     /* insert the new element at the tail of the queue */
     list_add_tail(&el->list, head);
