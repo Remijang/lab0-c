@@ -192,13 +192,13 @@ void q_swap(struct list_head *head)
     return;
 }
 
-/* Reverse elements in queue */
 #define list_swap_t(x, y)           \
     do {                            \
         struct list_head *SWAP = x; \
         x = y;                      \
         y = SWAP;                   \
     } while (0)
+/* Reverse elements in queue */
 void q_reverse(struct list_head *head)
 {
     if (!head || list_empty(head))
@@ -237,8 +237,59 @@ void q_reverseK(struct list_head *head, int k)
     }
 }
 
+/* ensure that head, left, right are non-NULL pointer */
+void merge2sorted(struct list_head *head,
+                  struct list_head *left,
+                  struct list_head *right,
+                  bool descend)
+{
+    while (!list_empty(left) && !list_empty(right)) {
+        const element_t *el1 = list_entry(left->next, element_t, list);
+        const element_t *el2 = list_entry(right->next, element_t, list);
+        int c = strcmp(el1->value, el2->value);
+        struct list_head *li = descend ? (c < 0 ? left->next : right->next)
+                                       : (c > 0 ? right->next : left->next);
+        list_del(li);
+        list_add_tail(li, head);
+    }
+    list_splice_tail(left, head);
+    list_splice_tail(right, head);
+    return;
+}
+
+void merge_sort(struct list_head *head, bool descend)
+{
+    /* handle the basic case */
+    if (!head || list_empty(head) || list_is_singular(head)) {
+        return;
+    }
+    /* use slow-fast pointer to find the mid */
+    struct list_head *slow = head->next, *fast = head->next->next;
+    while (fast != head && fast != head->prev) {
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+    /* break into two circular list and one empty head */
+    struct list_head *left = head->next, *right = slow->next;
+    struct list_head *left_end = slow, *right_end = head->prev;
+    struct list_head dummy_l = {left_end, left};
+    struct list_head dummy_r = {right_end, right};
+    left->prev = left_end->next = &dummy_l;
+    right->prev = right_end->next = &dummy_r;
+    INIT_LIST_HEAD(head);
+    /* solve the subproblem */
+    merge_sort(&dummy_l, descend);
+    merge_sort(&dummy_r, descend);
+    /* combine the result */
+    merge2sorted(head, &dummy_l, &dummy_r, descend);
+    return;
+}
+
 /* Sort elements of queue in ascending/descending order */
-void q_sort(struct list_head *head, bool descend) {}
+void q_sort(struct list_head *head, bool descend)
+{
+    return merge_sort(head, descend);
+}
 
 /* Remove every node which has a node with a strictly less value anywhere to
  * the right side of it */
