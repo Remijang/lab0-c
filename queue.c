@@ -260,9 +260,8 @@ void merge2sorted(struct list_head *head,
 void merge_sort(struct list_head *head, bool descend)
 {
     /* handle the basic case */
-    if (!head || list_empty(head) || list_is_singular(head)) {
+    if (!head || list_empty(head) || list_is_singular(head))
         return;
-    }
     /* use slow-fast pointer to find the mid */
     struct list_head *slow = head->next, *fast = head->next->next;
     while (fast != head && fast != head->prev) {
@@ -337,10 +336,36 @@ int q_descend(struct list_head *head)
     return len;
 }
 
+void merge2queue(struct list_head *left, struct list_head *right, bool descend)
+{
+    queue_contex_t *qu_l = list_entry(left, queue_contex_t, chain);
+    queue_contex_t *qu_r = list_entry(right, queue_contex_t, chain);
+    /* merge list to the dummy head */
+    LIST_HEAD(dummy);
+    merge2sorted(&dummy, qu_l->q, qu_r->q, descend);
+    /* replace the dummy head with the head of the left queue */
+    dummy.next->prev = qu_l->q;
+    dummy.prev->next = qu_l->q;
+    qu_l->q->next = dummy.next;
+    qu_l->q->prev = dummy.prev;
+    /* make the queue be empty */
+    INIT_LIST_HEAD(qu_r->q);
+    return;
+}
+
 /* Merge all the queues into one sorted queue, which is in ascending/descending
  * order */
 int q_merge(struct list_head *head, bool descend)
 {
-    // https://leetcode.com/problems/merge-k-sorted-lists/
-    return 0;
+    /* handle the basic case */
+    if (!head || list_empty(head))
+        return 0;
+    /* naive approach to merge queue */
+    struct list_head *li = head->next->next;
+    while (li != head) {
+        merge2queue(head->next, li, descend);
+        li = li->next;
+    }
+    queue_contex_t *qu = list_entry(head->next, queue_contex_t, chain);
+    return q_size(qu->q);
 }
