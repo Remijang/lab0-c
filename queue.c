@@ -303,50 +303,42 @@ void q_sort(struct list_head *head, bool descend)
     return merge_sort(head, descend);
 }
 
-/* Remove every node which has a node with a strictly less value anywhere to
- * the right side of it */
-int q_ascend(struct list_head *head)
+#define list_for_each_entry_safe_reverse(entry, safe, head, member)    \
+    for (entry = list_entry((head)->prev, typeof(*entry), member),     \
+        safe = list_entry(entry->member.prev, typeof(*entry), member); \
+         &entry->member != (head); entry = safe,                       \
+        safe = list_entry(safe->member.prev, typeof(*entry), member))
+
+int q_strict(struct list_head *head, int descend)
 {
     if (!head || list_empty(head) || list_is_singular(head))
         return q_size(head);
-    element_t *el = list_entry(head->prev, element_t, list);
-    element_t *el_safe = list_entry(el->list.prev, element_t, list);
-    const char *s = el->value;
+    element_t *el = NULL, *el_safe;
+    const char dummy[1] = "", *s = dummy;
     int len = 0;
-    for (; &el->list != head;
-         el = el_safe,
-         el_safe = list_entry(el_safe->list.prev, element_t, list)) {
-        if (strcmp(el->value, s) > 0) {
+    list_for_each_entry_safe_reverse(el, el_safe, head, list)
+    {
+        if (strcmp(el->value, s) * descend > 0) {
             list_del(&el->list);
-            free(el->value);
-            free(el);
+            q_release_element(el);
         } else
             s = el->value, ++len;
     }
     return len;
 }
 
+/* Remove every node which has a node with a strictly less value anywhere to
+ * the right side of it */
+int q_ascend(struct list_head *head)
+{
+    return q_strict(head, 1);
+}
+
 /* Remove every node which has a node with a strictly greater value anywhere to
  * the right side of it */
 int q_descend(struct list_head *head)
 {
-    if (!head || list_empty(head) || list_is_singular(head))
-        return q_size(head);
-    element_t *el = list_entry(head->prev, element_t, list);
-    element_t *el_safe = list_entry(el->list.prev, element_t, list);
-    const char *s = el->value;
-    int len = 0;
-    for (; &el->list != head;
-         el = el_safe,
-         el_safe = list_entry(el_safe->list.prev, element_t, list)) {
-        if (strcmp(el->value, s) < 0) {
-            list_del(&el->list);
-            free(el->value);
-            free(el);
-        } else
-            s = el->value, ++len;
-    }
-    return len;
+    return q_strict(head, -1);
 }
 
 void merge2queue(struct list_head *left, struct list_head *right, bool descend)
