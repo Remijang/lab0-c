@@ -34,36 +34,38 @@ void q_free(struct list_head *head)
     /* traverse the queue and release the memory */
     element_t *el = NULL, *el_safe;
     list_for_each_entry_safe (el, el_safe, head, list) {
-        list_del(&el->list);
-        free(el->value);
-        free(el);
+        q_release_element(el);
     }
+
     /* now "el" is the head element */
-    if (el->value)
-        free(el->value);
-    free(el);
+    q_release_element(el);
     return;
+}
+
+inline element_t *q_new_element(char *s)
+{
+    /* allocate the memory for the new element */
+    element_t *el = malloc(sizeof(element_t));
+    if (!el)
+        return NULL;
+
+    /* initialize the new element */
+    el->value = strdup(s);
+    if (!el->value) {
+        free(el);
+        return NULL;
+    }
+
+    return el;
 }
 
 /* Insert an element at head of queue */
 bool q_insert_head(struct list_head *head, char *s)
 {
-    if (!head || !s)
+    /* generate new element and handle exceptions */
+    element_t *el;
+    if (!head || !s || !(el = q_new_element(s)))
         return false;
-
-    /* allocate the memory for the new element */
-    element_t *el = malloc(sizeof(element_t));
-    if (!el)
-        return false;
-
-    /* initialize the new element */
-    int len = strlen(s);
-    el->value = malloc(sizeof(char) * (len + 1));
-    if (!el->value) {
-        free(el);
-        return false;
-    }
-    strncpy(el->value, s, len + 1);
 
     /* insert the new element at the head of the queue */
     list_add(&el->list, head);
@@ -74,22 +76,10 @@ bool q_insert_head(struct list_head *head, char *s)
 /* Insert an element at tail of queue */
 bool q_insert_tail(struct list_head *head, char *s)
 {
-    if (!head || !s)
+    /* generate new element and handle exceptions */
+    element_t *el;
+    if (!head || !s || !(el = q_new_element(s)))
         return false;
-
-    /* allocate the memory for the new element */
-    element_t *el = malloc(sizeof(element_t));
-    if (!el)
-        return false;
-
-    /* initialize the new element */
-    int len = strlen(s);
-    el->value = malloc(sizeof(char) * (len + 1));
-    if (!el->value) {
-        free(el);
-        return false;
-    }
-    strncpy(el->value, s, len + 1);
 
     /* insert the new element at the tail of the queue */
     list_add_tail(&el->list, head);
