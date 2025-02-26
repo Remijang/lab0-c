@@ -89,7 +89,7 @@ bool q_insert_tail(struct list_head *head, char *s)
 
 inline void q_copy_string(char *dst, char *src, size_t bufsize)
 {
-    /* copy the content to sp if sp is non-NULL */
+    /* copy the content to dst if dst is non-NULL */
     if (dst) {
         strncpy(dst, src, bufsize - 1);
         dst[bufsize - 1] = '\0';
@@ -104,7 +104,7 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
         return NULL;
 
     /* extract the element from the head of the queue */
-    element_t *el = list_entry(head->next, element_t, list);
+    element_t *el = list_first_entry(head, element_t, list);
     list_del(head->next);
 
     q_copy_string(sp, el->value, bufsize);
@@ -119,7 +119,7 @@ element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
         return NULL;
 
     /* extract the element from the tail of the queue */
-    element_t *el = list_entry(head->prev, element_t, list);
+    element_t *el = list_last_entry(head, element_t, list);
     list_del(head->prev);
 
     q_copy_string(sp, el->value, bufsize);
@@ -174,15 +174,14 @@ bool q_delete_dup(struct list_head *head)
             if (!strcmp(el_left->value, el_right->value)) {
                 has = true;
                 list_del(&el_right->list);
-                free(el_right->value);
-                free(el_right);
+                q_release_element(el_right);
             }
         }
+        /* it is necessary to reassign the value of safe var */
         left_safe = left->next;
         if (has) {
             list_del(left);
-            free(el_left->value);
-            free(el_left);
+            q_release_element(el_left);
         }
     }
     return true;
@@ -191,21 +190,7 @@ bool q_delete_dup(struct list_head *head)
 /* Swap every two adjacent nodes */
 void q_swap(struct list_head *head)
 {
-    if (!head || list_empty(head))
-        return;
-    struct list_head **li;
-    for (li = &head->next; *li != head && *li != head->prev;
-         li = &(*li)->next->next) {
-        struct list_head *first = *li, *second = (*li)->next;
-        second->next->prev = first;
-        *li = second;
-
-        first->next = second->next;
-        second->prev = first->prev;
-
-        first->prev = second;
-        second->next = first;
-    }
+    q_reverseK(head, 2);
     return;
 }
 
@@ -260,8 +245,8 @@ void merge2sorted(struct list_head *head,
                   bool descend)
 {
     while (!list_empty(left) && !list_empty(right)) {
-        const element_t *el1 = list_entry(left->next, element_t, list);
-        const element_t *el2 = list_entry(right->next, element_t, list);
+        const element_t *el1 = list_first_entry(left, element_t, list);
+        const element_t *el2 = list_first_entry(right, element_t, list);
         int c = strcmp(el1->value, el2->value);
         struct list_head *li = descend ? (c < 0 ? left->next : right->next)
                                        : (c > 0 ? right->next : left->next);
@@ -374,6 +359,6 @@ int q_merge(struct list_head *head, bool descend)
         merge2queue(head->next, li, descend);
         li = li->next;
     }
-    queue_contex_t *qu = list_entry(head->next, queue_contex_t, chain);
+    queue_contex_t *qu = list_first_entry(head, queue_contex_t, chain);
     return q_size(qu->q);
 }
