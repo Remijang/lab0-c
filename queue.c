@@ -218,24 +218,29 @@ void q_reverse(struct list_head *head)
 void q_reverseK(struct list_head *head, int k)
 {
     // TODO: raise the exception of the case k <= 0
-    if (!head || list_empty(head))
+    if (!head || list_empty(head) || k == 1)
         return;
-    struct list_head *li, *li_safe;
-    struct list_head *cur = head, *next = cur->next;
-    for (int i = 0; i < k; ++i, next = next->next) {
-        if (next == head)
-            return;
+    struct list_head *li;
+    LIST_HEAD(cache);
+    LIST_HEAD(dummy_head);
+    bool check = true;
+    while (check) {
+        for (int _ = 0; _ < k; ++_) {
+            if (list_empty(head)) {
+                check = false;
+                break;
+            }
+            li = head->next;
+            list_del(li);
+            list_add(li, &cache);
+        }
+        if (!check)
+            q_reverse(&cache);
+        list_splice_tail(&cache, &dummy_head);
+        INIT_LIST_HEAD(&cache);
     }
-    while (true) {
-        list_for_each_safe_partial(li, li_safe, cur, next)
-            list_swap_t(li->prev, li->next);
-        list_swap_t(cur->next->next, next->prev->prev);
-        list_swap_t(cur->next, next->prev);
-        cur = next->prev;
-        for (int i = 0; i < k; ++i, next = next->next)
-            if (next == head)
-                return;
-    }
+    list_add(head, &dummy_head);
+    list_del(&dummy_head);
 }
 
 /* ensure that head, left, right are non-NULL pointer */
@@ -270,13 +275,9 @@ void merge_sort(struct list_head *head, bool descend)
         fast = fast->next->next;
     }
     /* break into two circular list and one empty head */
-    struct list_head *left = head->next, *right = slow->next;
-    struct list_head *left_end = slow, *right_end = head->prev;
-    struct list_head dummy_l = {left_end, left};
-    struct list_head dummy_r = {right_end, right};
-    left->prev = left_end->next = &dummy_l;
-    right->prev = right_end->next = &dummy_r;
-    INIT_LIST_HEAD(head);
+    struct list_head dummy_l, dummy_r;
+    list_cut_position(&dummy_l, head, slow);
+    list_cut_position(&dummy_r, head, head->prev);
     /* solve the subproblem */
     merge_sort(&dummy_l, descend);
     merge_sort(&dummy_r, descend);
@@ -337,10 +338,8 @@ void merge2queue(struct list_head *left, struct list_head *right, bool descend)
     LIST_HEAD(dummy);
     merge2sorted(&dummy, qu_l->q, qu_r->q, descend);
     /* replace the dummy head with the head of the left queue */
-    dummy.next->prev = qu_l->q;
-    dummy.prev->next = qu_l->q;
-    qu_l->q->next = dummy.next;
-    qu_l->q->prev = dummy.prev;
+    list_add(qu_l->q, &dummy);
+    list_del(&dummy);
     /* make the queue be empty */
     INIT_LIST_HEAD(qu_r->q);
     return;
