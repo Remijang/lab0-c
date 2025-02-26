@@ -87,6 +87,16 @@ bool q_insert_tail(struct list_head *head, char *s)
     return true;
 }
 
+inline void q_copy_string(char *dst, char *src, size_t bufsize)
+{
+    /* copy the content to sp if sp is non-NULL */
+    if (dst) {
+        strncpy(dst, src, bufsize - 1);
+        dst[bufsize - 1] = '\0';
+    }
+    return;
+}
+
 /* Remove an element from head of queue */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
@@ -97,11 +107,7 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
     element_t *el = list_entry(head->next, element_t, list);
     list_del(head->next);
 
-    /* copy the content to sp if sp is non-NULL */
-    if (sp) {
-        strncpy(sp, el->value, bufsize - 1);
-        sp[bufsize - 1] = '\0';
-    }
+    q_copy_string(sp, el->value, bufsize);
 
     return el;
 }
@@ -116,11 +122,7 @@ element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
     element_t *el = list_entry(head->prev, element_t, list);
     list_del(head->prev);
 
-    /* copy the content to sp if sp is non-NULL */
-    if (sp) {
-        strncpy(sp, el->value, bufsize - 1);
-        sp[bufsize - 1] = '\0';
-    }
+    q_copy_string(sp, el->value, bufsize);
 
     return el;
 }
