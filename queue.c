@@ -154,6 +154,10 @@ bool q_delete_mid(struct list_head *head)
     return true;
 }
 
+#define list_for_each_safe_partial(node, safe, start, end)       \
+    for (node = (start)->next, safe = node->next; node != (end); \
+         node = safe, safe = node->next)
+
 /* Delete all nodes that have duplicate string */
 bool q_delete_dup(struct list_head *head)
 {
@@ -164,8 +168,8 @@ bool q_delete_dup(struct list_head *head)
         element_t *el_left = list_entry(left, element_t, list);
         bool has = false;
         struct list_head *right, *right_safe;
-        for (right = el_left->list.next, right_safe = right->next;
-             right != head; right = right_safe, right_safe = right_safe->next) {
+        list_for_each_safe_partial(right, right_safe, left, head)
+        {
             element_t *el_right = list_entry(right, element_t, list);
             if (!strcmp(el_left->value, el_right->value)) {
                 has = true;
@@ -238,8 +242,7 @@ void q_reverseK(struct list_head *head, int k)
             return;
     }
     while (true) {
-        for (li = cur->next, li_safe = li->next; li != next;
-             li = li_safe, li_safe = li_safe->next)
+        list_for_each_safe_partial(li, li_safe, cur, next)
             list_swap_t(li->prev, li->next);
         list_swap_t(cur->next->next, next->prev->prev);
         list_swap_t(cur->next, next->prev);
