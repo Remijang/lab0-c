@@ -1,11 +1,13 @@
 #ifndef DUDECT_CPUCYCLES_H
 #define DUDECT_CPUCYCLES_H
 
+#include <immintrin.h>
 #include <stdint.h>
 
 // http://www.intel.com/content/www/us/en/embedded/training/ia-32-ia-64-benchmark-code-execution-paper.html
 static inline int64_t cpucycles(void)
 {
+    _mm_mfence();
 #if defined(__i386__) || defined(__x86_64__)
     unsigned int hi, lo;
     __asm__ volatile("rdtsc\n\t" : "=a"(lo), "=d"(hi));
