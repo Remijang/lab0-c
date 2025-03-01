@@ -13,16 +13,11 @@
 /* Create an empty queue */
 struct list_head *q_new()
 {
-    /* allocate the memory for the head of the queue */
-    element_t *el_new = malloc(sizeof(element_t));
-    if (!el_new)
+    struct list_head *li_new = malloc(sizeof(struct list_head));
+    if (!li_new)
         return NULL;
-
-    /* initialize the head of the queue */
-    *el_new =
-        (element_t){.value = NULL,
-                    .list = (struct list_head){&el_new->list, &el_new->list}};
-    return &el_new->list;
+    INIT_LIST_HEAD(li_new);
+    return li_new;
 }
 
 /* Free all storage used by queue */
@@ -37,8 +32,7 @@ void q_free(struct list_head *head)
         q_release_element(el);
     }
 
-    /* now "el" is the head element */
-    q_release_element(el);
+    free(head);
     return;
 }
 
@@ -149,8 +143,9 @@ bool q_delete_mid(struct list_head *head)
         slow = slow->next;
         fast = fast->next->next;
     }
-    list_del_init(slow);
-    q_free(slow);
+    list_del(slow);
+    element_t *el = list_entry(slow, element_t, list);
+    q_release_element(el);
     return true;
 }
 
