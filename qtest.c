@@ -19,6 +19,7 @@
 #include <time.h>
 #endif
 
+#include "dudect/cpucycles.h"
 #include "dudect/fixture.h"
 #include "list.h"
 #include "list_sort.h"
@@ -614,10 +615,14 @@ bool do_sort(int argc, char *argv[])
                current->size, MAX_NODES);
 
     if (current && exception_setup(true)) {
+        int64_t start, end;
+        start = cpucycles();
         if (sort == 0)
             q_sort(current->q, descend);
         else if (sort == 1)
             linux_list_sort(current->q, descend);
+        end = cpucycles();
+        printf("sort cpucycles: %ld\n", end - start);
     }
     exception_cancel();
     set_noallocate_mode(false);
