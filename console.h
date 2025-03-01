@@ -13,6 +13,9 @@
 /* Simulation flag of console option */
 extern int simulation;
 
+/* Sort flag of console option */
+extern int sort;
+
 /* Each command defined in terms of a function */
 typedef bool (*cmd_func_t)(int argc, char *argv[]);
 

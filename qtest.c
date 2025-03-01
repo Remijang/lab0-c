@@ -21,6 +21,7 @@
 
 #include "dudect/fixture.h"
 #include "list.h"
+#include "list_sort.h"
 #include "random.h"
 
 /* Shannon entropy */
@@ -612,8 +613,12 @@ bool do_sort(int argc, char *argv[])
                "number of elements %d is too large, exceeds the limit %d.",
                current->size, MAX_NODES);
 
-    if (current && exception_setup(true))
-        q_sort(current->q, descend);
+    if (current && exception_setup(true)) {
+        if (sort == 0)
+            q_sort(current->q, descend);
+        else if (sort == 1)
+            linux_list_sort(current->q, descend);
+    }
     exception_cancel();
     set_noallocate_mode(false);
 

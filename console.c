@@ -22,6 +22,7 @@ static cmd_element_t *cmd_list = NULL;
 static param_element_t *param_list = NULL;
 static bool block_flag = false;
 static bool prompt_flag = true;
+int sort = 0;
 
 /* Am I timing a command that has the console blocked? */
 static bool block_timing = false;
@@ -437,6 +438,7 @@ void init_cmd()
     add_param("error", &err_limit, "Number of errors until exit", NULL);
     add_param("echo", &echo, "Do/don't echo commands", NULL);
     add_param("entropy", &show_entropy, "Show/Hide Shannon entropy", NULL);
+    add_param("sort", &sort, "Sort type: merge sort/linux list sort", NULL);
 
     init_in();
     init_time(&last_time);
